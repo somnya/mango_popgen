@@ -1,0 +1,5 @@
+stacks==2.60
+bwa==0.7.17
+sra-tools==2.11.0
+plink2==2.00a2.3
+admixture==1.3.0

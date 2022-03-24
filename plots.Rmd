@@ -1,0 +1,75 @@
+---
+title: "plots"
+author: "tu nombre"
+date: "23/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(reshape2)
+library(ggplot2)
+library(ggrepel)
+```
+
+# Primero veamos qué tanto porcentaje de variación explican los componentes
+
+```{r}
+eigenval = scan("plink/pca.eigenval")
+# Convertimos los valores a porcentaje
+eigenval = data.frame(PC = 1:20, PVE = eigenval/sum(eigenval)*100)
+#Graficamos
+ggplot(pve, aes(PC, pve)) + 
+  geom_bar(stat = "identity") + 
+  labs(title="Componente principales", y="Porcentaje de varianza explicado") 
+```
+
+# Ahora resolveremos una pregunta importante: ¿el PCA revela agrupamiento de las poblaciones?
+
+```{r}
+pca = read_table("plink/pca.clusters", col_names = FALSE)
+# Ecogemos las columnas que nos interesan
+pca = pca %>% subset(select=c(2, 4, 8, 9))
+# Nombramos columnas
+colnames(pca) = c("name", "pop", "PC1", "PC2")
+# Graficamos, inlcuyendo el % de varianza
+ggplot(pca, aes(PC1, PC2, col=pop, label=name)) + 
+  geom_point(size=5) + 
+  geom_text_repel(color="black") +
+  labs(title="Análisis de componentes principales", x="PC1 (15.2%)", y="PC2 (9.7%)", col="Población") + 
+  theme_bw()
+```
+
+# Muy bien, ahora exploremos los resultados de ADMIXTURE
+
+# Primero, hay que escoger un valor de K que mejor explique la ancestría de las poblaciones.
+# Vamos a tomar el archivo de los valores de error por validación cruzada que extrajimos previamente.
+
+```{r}
+cvad = read.table("admixture_files/error.txt")
+# Nombramos columnas
+colnames(cvad) = c("K", "CVEV")
+#Graficamos
+ggplot(cvad) + 
+  geom_line(aes(K, CVEV), size=2) + 
+  geom_point(aes(K, CVEV), size=4) +
+  labs(title="Validación cruzada de K", x="K", y="Valor de error")
+```
+
+# Como no podemos tomar 1, el K con menor error es 5, entonces utilizamos los procentajes de ancestría con ese K para graficarlo.
+
+```{r}
+fivek = read.table("admixture_files/admix.5.Q")
+colnames(fivek) = c("K1", "K2", "K3", "K4", "K5")
+# Vamos a pegarle las etiquetas de población y nombre
+admix = data.frame(pca$name, pca$pop, fivek)
+# La siguiente función convertirá los valores de K en una sola variable y los emparejará con su etiqueta.
+admix=melt(admix, value.name = "per")
+# Graficamos
+ggplot(group_by(admix, pca.pop)) + 
+  geom_bar(aes(pca.name, per, fill=variable), position = "stack", stat = "identity", width=1) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), axis.ticks.x=element_blank(), legend.position = "none") +
+  labs(title= "ADMIXTURE K=5", y= "Probabilidad de ancestría", x= NULL) +
+  scale_fill_viridis_d() +
+  facet_wrap(~pca.pop, ncol=1)
+```

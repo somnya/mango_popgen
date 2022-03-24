@@ -19,7 +19,7 @@ eigenval = scan("plink/pca.eigenval")
 # Convertimos los valores a porcentaje
 eigenval = data.frame(PC = 1:20, PVE = eigenval/sum(eigenval)*100)
 #Graficamos
-ggplot(pve, aes(PC, pve)) + 
+ggplot(eigenval, aes(PC, PVE)) + 
   geom_bar(stat = "identity") + 
   labs(title="Componente principales", y="Porcentaje de varianza explicado") 
 ```

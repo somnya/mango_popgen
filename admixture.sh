@@ -2,7 +2,7 @@ rm -r admixture_files/
 mkdir admixture_files
 cd admixture_files/
 
-for K in {1..20}
+for K in {1..6}
 do
 admixture --cv ../plink/admix.bed $K > ${K}.out
 done

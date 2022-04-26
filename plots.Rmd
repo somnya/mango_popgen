@@ -65,9 +65,19 @@ colnames(fivek) = c("K1", "K2", "K3", "K4", "K5")
 admix = data.frame(pca$name, pca$pop, fivek)
 # La siguiente función convertirá los valores de K en una sola variable y los emparejará con su etiqueta.
 admix=melt(admix, value.name = "per")
+
+# Ordenar las muestras mediante clustering jerárgico
+rownames(fivek) = pca$name
+ord = dist(fivek)
+ord = hclust(ord)
+ord = ord$labels[c(ord$order)] 
+
+# Usar ese orden
+admix$pca.name = factor(admix$pca.name, levels = ord)
+
 # Graficamos
-ggplot(group_by(admix, pca.pop)) + 
-  geom_bar(aes(pca.name, per, fill=variable), position = "stack", stat = "identity", width=1) + 
+ggplot(admix) + 
+  geom_bar(aes(pca.name, per, fill=variable, group = per), position = "stack", stat = "identity", width=1) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), axis.ticks.x=element_blank(), legend.position = "none") +
   labs(title= "ADMIXTURE K=5", y= "Probabilidad de ancestría", x= NULL) +
   scale_fill_viridis_d() +
